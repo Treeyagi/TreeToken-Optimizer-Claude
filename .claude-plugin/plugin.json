@@ -1,0 +1,8 @@
+{
+  "name": "treeyagi-band",
+  "version": "0.1.0",
+  "description": "Swaps Clawd in the Token Optimizer band for Treeyagi sprites",
+  "author": { "name": "Treeyagi", "url": "https://github.com/Treeyagi" },
+  "homepage": "https://github.com/Treeyagi/TreeToken-Optimizer-Claude",
+  "license": "SEE LICENSE IN LICENSE"
+}

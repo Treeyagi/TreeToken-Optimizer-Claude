@@ -1,0 +1,5 @@
+{
+  "name": "treetoken-optimizer-claude",
+  "owner": { "name": "Treeyagi" },
+  "plugins": [{ "name": "treeyagi-band", "source": "./" }]
+}

@@ -12,6 +12,16 @@ Needs the [Token Optimizer](https://github.com/alexgreensh/token-optimizer) plug
 
 Answer `y` to add the marketplace, then pick a scope. Restart the session and Treeyagi appears in the Token Optimizer band.
 
+### Load order (required)
+
+The mod has to run outside Token Optimizer's band to swap its pictures. Add it to `prependPlugins` in `~/.claude/settings.json`, next to `enabledPlugins`:
+
+```json
+"prependPlugins": ["treeyagi-band@treetoken-optimizer-claude"]
+```
+
+Without this, Token Optimizer loads first and Clawd stays in the band. Keep the marketplace entry and `enabledPlugins` flag for treeyagi-band as well. Removing any of the three turns Treeyagi off. Restart the session after changing them.
+
 | Clawd pose | Treeyagi action |
 | --- | --- |
 | watching | idle |

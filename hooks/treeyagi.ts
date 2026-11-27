@@ -40,61 +40,23 @@ export function treeyagiAlt(alt: string): string {
 
 export type DrawOptions = { animate: boolean; fadeIn: boolean }
 
-/**
- * Frames crossfade instead of cutting: around each frame boundary the outgoing
- * frame fades out as the incoming one fades in. Looping clips wrap, so the last
- * frame blends back into the first; one-shots never fade out of their last frame.
- */
 function frames(clip: Clip, animate: boolean): string {
-  const n = clip.frames.length
-  const img = (f: Clip['frames'][number], op: number, anim: string) =>
-    `<image href="${f.uri}" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" opacity="${op}">${anim}</image>`
-  if (!animate || n === 1) return img(clip.frames[0], 1, '')
-
   const total = clip.frames.reduce((s, f) => s + f.ms, 0)
-  const starts: number[] = []
   let at = 0
-  for (const f of clip.frames) { starts.push(at); at += f.ms }
-  // Blend window: up to 70ms, never more than half of the shortest frame.
-  const win = Math.min(70, Math.min(...clip.frames.map(f => f.ms)) / 2)
-  const half = win / 2
-  // Boundaries a blend happens on. A loop also blends last -> first at the seam.
-  const bounds = clip.loop ? starts : starts.slice(1)
-
-  // Opacity of frame i at time t (ms). Piecewise linear, with kinks only at
-  // bound +/- half, which is exactly where the keyframes below are placed.
-  const opacity = (i: number, t: number): number => {
-    for (const b of bounds) {
-      const incoming = starts.indexOf(b)
-      let d = t - b
-      if (clip.loop) d = ((((d + total / 2) % total) + total) % total) - total / 2
-      if (Math.abs(d) >= half) continue
-      const p = (d + half) / win
-      if (i === incoming) return p
-      if (i === (incoming + n - 1) % n) return 1 - p
-      return 0
-    }
-    let k = n - 1
-    while (starts[k] > t) k--
-    return i === k ? 1 : 0
-  }
-
-  const pts = new Set<number>([0, total])
-  for (const b of bounds) {
-    for (const t of [b - half, b + half, b - half + total, b + half - total]) {
-      if (t > 0 && t < total) pts.add(t)
-    }
-  }
-  const times = [...pts].sort((x, y) => x - y)
-  const keyTimes = times.map(t => (t / total).toFixed(4)).join(';')
-  const repeat = clip.loop ? ' repeatCount="indefinite"' : ' fill="freeze"'
-
   return clip.frames.map((f, i) => {
-    const values = times.map(t => opacity(i, t).toFixed(3))
-    // At t=total a one-shot sits on its last frame, so it freezes there.
-    if (!clip.loop) values[values.length - 1] = i === n - 1 ? '1.000' : '0.000'
-    const anim = `<animate attributeName="opacity" values="${values.join(';')}" keyTimes="${keyTimes}" dur="${total}ms" calcMode="linear"${repeat}/>`
-    return img(f, Number(values[0]), anim)
+    const start = at / total
+    at += f.ms
+    const end = at / total
+    const img = (vis: string, anim: string) =>
+      `<image href="${f.uri}" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" visibility="${vis}">${anim}</image>`
+    if (!animate) return i === 0 ? img('visible', '') : ''
+    const last = i === clip.frames.length - 1
+    // A one-shot plays once and keeps its last frame.
+    const repeat = clip.loop ? ' repeatCount="indefinite"' : ' fill="freeze"'
+    const values = i === 0 ? 'visible;hidden' : last ? 'hidden;visible' : 'hidden;visible;hidden'
+    const times = i === 0 ? `0;${end.toFixed(4)}` : last ? `0;${start.toFixed(4)}` : `0;${start.toFixed(4)};${end.toFixed(4)}`
+    const anim = `<animate attributeName="visibility" values="${values}" keyTimes="${times}" dur="${total}ms" calcMode="discrete"${repeat}/>`
+    return img(i === 0 ? 'visible' : 'hidden', anim)
   }).join('')
 }
 
